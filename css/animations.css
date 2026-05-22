@@ -1,0 +1,125 @@
+body {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+body.page-ready {
+  animation: pageFade 420ms ease both;
+}
+
+@keyframes pageFade {
+  from {
+    opacity: 0.72;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.caret {
+  color: var(--green);
+  animation: blink 800ms steps(2, start) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.hero-panel,
+.glass-panel,
+.question-card,
+.category-card {
+  animation: riseIn 520ms ease both;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-panel {
+  animation-delay: 120ms;
+}
+
+.category-card:nth-child(2n),
+.question-card:nth-child(2n) {
+  animation-delay: 70ms;
+}
+
+.category-card:nth-child(3n),
+.question-card:nth-child(3n) {
+  animation-delay: 140ms;
+}
+
+.btn.primary {
+  background-size: 190% 190%;
+  animation: gradientShift 5s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.skeleton-card {
+  overflow: hidden;
+}
+
+.skeleton-line {
+  height: 14px;
+  width: 72%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.07), rgba(54, 231, 255, 0.18), rgba(255, 255, 255, 0.07));
+  background-size: 220% 100%;
+  animation: skeleton 1.3s linear infinite;
+}
+
+.skeleton-line.wide {
+  width: 92%;
+  height: 22px;
+}
+
+.skeleton-line.short {
+  width: 44%;
+}
+
+@keyframes skeleton {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+.icon-action:hover,
+.emoji-action:hover {
+  border-color: rgba(54, 231, 255, 0.5);
+  box-shadow: 0 0 20px rgba(54, 231, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
