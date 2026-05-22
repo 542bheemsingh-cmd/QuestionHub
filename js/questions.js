@@ -24,11 +24,38 @@ import {
   getDownloadURL,
 } from "./firebase.js";
 import { requireUser } from "./auth.js";
-import { $, escapeHtml, formatDate, getAvatar, getDisplayName, showSkeleton, toast } from "./ui.js";
+import { $, categories, escapeHtml, formatDate, getAvatar, getDisplayName, showSkeleton, toast } from "./ui.js";
 
 const pageSize = 8;
 let lastQuestionDoc = null;
 let loadingMore = false;
+
+function withTimeout(promise, message = "Request timed out. Firebase rules/network check karo.", ms = 15000) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+function getQuestionErrorMessage(error) {
+  const messages = {
+    "permission-denied": "Firestore rules write allow nahi kar rahe. Firebase Console > Firestore rules mein authenticated create allow karo.",
+    "unauthenticated": "Session expire ho gaya. Login karke dobara publish karo.",
+    "failed-precondition": "Firestore database/index setup incomplete hai. Firebase Console mein Firestore Database enable karo.",
+    "unavailable": "Firebase temporarily unavailable hai. Network check karke dobara try karo.",
+  };
+  return messages[error.code] || error.message || "Question publish nahi ho paya.";
+}
+
+function setFirebaseStatus(type, message) {
+  const box = $("#firebase-status");
+  if (!box) return;
+  box.className = `firebase-status ${type}`;
+  const icon = type === "ok" ? "CircleCheck" : type === "error" ? "TriangleAlert" : "LoaderCircle";
+  box.innerHTML = `<i data-lucide="${icon}"></i><span>${escapeHtml(message)}</span>`;
+  if (window.lucide) window.lucide.createIcons();
+}
 
 export function questionCard(question, id) {
   const tags = (question.tags || []).slice(0, 4).map((tag) => `<span>#${escapeHtml(tag)}</span>`).join("");
@@ -64,30 +91,87 @@ async function uploadQuestionImage(file, userId) {
 
 export function initAskPage() {
   const form = $("#ask-form");
-  const select = $("#category");
+  const categoryInput = $("#category");
+  const categoryTrigger = $("[data-category-select] .custom-select-trigger");
+  const categoryCurrent = $("[data-category-current]");
+  const categoryMenu = $("[data-category-menu]");
   if (!form) return;
-  import("./ui.js").then(({ categories }) => {
-    select.innerHTML = categories.map((category) => `<option value="${category.name}">${category.name}</option>`).join("");
+
+  auth.onAuthStateChanged?.((user) => {
+    if (!user) {
+      setFirebaseStatus("warn", "Login required hai. Publish karne ke liye pehle login karo.");
+      return;
+    }
+    setFirebaseStatus("ok", `Logged in as ${getDisplayName(user)}. Ready to publish.`);
   });
+
+  if (categoryInput && categoryMenu && categoryTrigger && categoryCurrent) {
+    categoryMenu.innerHTML = categories.map((category) => `
+      <button type="button" style="--accent:${category.color}" data-category-option="${escapeHtml(category.name)}">
+        <i data-lucide="${category.icon}"></i>
+        <span>${escapeHtml(category.name)}</span>
+      </button>
+    `).join("");
+
+    categoryTrigger.addEventListener("click", () => {
+      const open = categoryTrigger.getAttribute("aria-expanded") === "true";
+      categoryTrigger.setAttribute("aria-expanded", String(!open));
+      categoryMenu.classList.toggle("is-open", !open);
+    });
+
+    categoryMenu.addEventListener("click", (event) => {
+      const option = event.target.closest("[data-category-option]");
+      if (!option) return;
+      categoryInput.value = option.dataset.categoryOption;
+      categoryCurrent.textContent = option.dataset.categoryOption;
+      categoryTrigger.setAttribute("aria-expanded", "false");
+      categoryMenu.classList.remove("is-open");
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-category-select]")) {
+        categoryTrigger.setAttribute("aria-expanded", "false");
+        categoryMenu.classList.remove("is-open");
+      }
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const user = await requireUser();
     if (!user) return;
     const data = new FormData(form);
     const submit = form.querySelector("button[type='submit']");
+    const original = submit.innerHTML;
+    const title = String(data.get("title") || "").trim();
+    const description = String(data.get("description") || "").trim();
+    const category = String(data.get("category") || "").trim();
+    if (!title || !description || !category) {
+      toast("Title, description aur category required hain.", "error");
+      return;
+    }
     submit.disabled = true;
-    submit.textContent = "Publishing...";
+    submit.innerHTML = `<i data-lucide="LoaderCircle"></i>Publishing...`;
+    if (window.lucide) window.lucide.createIcons();
     try {
-      const imageUrl = await uploadQuestionImage(data.get("image"), user.uid);
+      let imageUrl = "";
+      try {
+        imageUrl = await withTimeout(uploadQuestionImage(data.get("image"), user.uid), "Image upload stuck hai. Storage rules/network check karo.");
+      } catch (imageError) {
+        toast("Image upload fail hua. Question text ke saath publish ho raha hai.", "warning");
+        console.warn("Image upload skipped:", imageError);
+      }
       const tags = String(data.get("tags") || "")
         .split(",")
         .map((tag) => tag.trim().toLowerCase())
         .filter(Boolean)
         .slice(0, 8);
-      const docRef = await addDoc(collection(db, "questions"), {
-        title: data.get("title").trim(),
-        description: data.get("description").trim(),
-        category: data.get("category"),
+      const docRef = await withTimeout(addDoc(collection(db, "questions"), {
+        title,
+        description,
+        category,
         tags,
         imageUrl,
         authorId: user.uid,
@@ -98,13 +182,18 @@ export function initAskPage() {
         bookmarks: [],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      }), "Publish request timed out. Firestore rules/network check karo.");
+      setFirebaseStatus("ok", "Question saved successfully.");
       toast("Question launched into the hub.", "success");
       location.href = `question.html?id=${docRef.id}`;
     } catch (error) {
-      toast(error.message, "error");
+      setFirebaseStatus("error", getQuestionErrorMessage(error));
+      toast(getQuestionErrorMessage(error), "error");
+      console.error("Publish failed:", error);
+    } finally {
       submit.disabled = false;
-      submit.textContent = "Publish question";
+      submit.innerHTML = original;
+      if (window.lucide) window.lucide.createIcons();
     }
   });
 }
