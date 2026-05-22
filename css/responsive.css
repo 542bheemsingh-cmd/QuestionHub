@@ -80,8 +80,16 @@
   .question-grid.compact,
   .category-grid,
   .form-grid,
-  .signal-grid {
+  .signal-grid,
+  .profile-stats,
+  .profile-actions,
+  .saved-grid,
+  .profile-hero {
     grid-template-columns: 1fr;
+  }
+
+  .profile-hero {
+    align-items: start;
   }
 
   .question-card {
