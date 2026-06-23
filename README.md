@@ -22,7 +22,7 @@ Built with a clean modern UI, responsive design, smooth animations, and optimize
 
 <br><br>
 
-<a href="https://github.com/YOUR_USERNAME/questionhub" target="_blank">
+<a href="https://github.com/542bheemsingh-cmd/questionhub" target="_blank">
   📂 GitHub Repository
 </a>
 
@@ -79,7 +79,7 @@ Built with a clean modern UI, responsive design, smooth animations, and optimize
 Clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/questionhub.git
+git clone https://github.com/542bheemsingh-cmd/questionhub.git
 
 
 
