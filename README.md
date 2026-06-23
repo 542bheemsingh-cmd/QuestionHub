@@ -79,7 +79,7 @@ Built with a clean modern UI, responsive design, smooth animations, and optimize
 Clone the repository:
 
 ```bash
-git clone https://github.com/542bheemsingh-cmd/questionhub.git
+git clone https://github.com/542bheemsingh-cmd/QuestionHub.git
 
 
 
