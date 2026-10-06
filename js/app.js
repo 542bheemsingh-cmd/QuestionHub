@@ -1,6 +1,6 @@
 import { auth, db, onAuthStateChanged, doc, getDoc } from "./firebase.js";
 import { initAuthControls } from "./auth.js";
-import { initAskPage, initQuestionActions, listenQuestionList, listenSearch, getQuestion } from "./questions.js";
+import { initAskPage, initQuestionActions, listenQuestionList, listenCategoryQuestions, listenSearch, getQuestion } from "./questions.js";
 import { initReplies } from "./replies.js";
 import { $, categories, escapeHtml, formatDate, initPageChrome, renderCategoryCards } from "./ui.js";
 
@@ -16,8 +16,16 @@ if (page === "home") {
   });
   const params = new URLSearchParams(location.search);
   const category = params.get("category");
-  listenQuestionList($("#trending-list"), { orderField: "likeCount", limit: 6, skeletonCount: 3 });
-  listenQuestionList($("#latest-list"), { category, limit: 8, skeletonCount: 4 });
+  if (category) {
+    $("[data-feed-section='trending']")?.setAttribute("hidden", "true");
+    $("#latest-eyebrow").textContent = "Category feed · 15 per page";
+    $("#latest-title").textContent = category;
+    $("#latest-feed-badge").innerHTML = `<i data-lucide="Layers3"></i>15 per page`;
+    listenCategoryQuestions($("#latest-list"), $("#latest-pagination"), category, 15);
+  } else {
+    listenQuestionList($("#trending-list"), { orderField: "likeCount", limit: 5, skeletonCount: 3 });
+    listenQuestionList($("#latest-list"), { limit: 5, skeletonCount: 4 });
+  }
   listenSearch($("#global-search"), $("#search-results"));
   const tagWrap = $("#trending-tags");
   if (tagWrap) {
@@ -170,4 +178,3 @@ if (page === "profile") {
     if (window.lucide) window.lucide.createIcons();
   });
 }
-

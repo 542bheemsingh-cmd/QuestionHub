@@ -61,6 +61,15 @@
     font-size: clamp(2.65rem, 16vw, 4.7rem);
   }
 
+  .hero-section {
+    padding-top: 66px;
+  }
+
+  .hero-section::before {
+    top: 22px;
+    font-size: 0.58rem;
+  }
+
   .hero-copy p:not(.eyebrow) {
     font-size: 1rem;
   }
@@ -74,6 +83,14 @@
 
   .btn {
     width: 100%;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .feed-badge {
+    align-self: flex-start;
   }
 
   .question-grid,
@@ -102,6 +119,15 @@
   .detail-card,
   .profile-panel {
     padding: 18px;
+  }
+
+  .profile-cover {
+    height: 106px;
+  }
+
+  .profile-hero {
+    gap: 14px;
+    padding-top: 50px;
   }
 
   .toast-stack {

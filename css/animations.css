@@ -36,6 +36,19 @@ body.page-ready {
   animation: riseIn 520ms ease both;
 }
 
+.firebase-status.ok svg {
+  animation: statusPulse 2.2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 0 rgba(114, 245, 194, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(114, 245, 194, 0.8));
+  }
+}
+
 @keyframes riseIn {
   from {
     opacity: 0;
@@ -111,6 +124,13 @@ body.page-ready {
   border-color: rgba(54, 231, 255, 0.5);
   box-shadow: 0 0 20px rgba(54, 231, 255, 0.18);
   transform: translateY(-1px);
+}
+
+.question-card,
+.category-card,
+.profile-action-card,
+.saved-question-card {
+  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {

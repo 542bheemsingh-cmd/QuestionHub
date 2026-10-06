@@ -19,12 +19,15 @@ import {
   getDownloadURL,
 } from "./firebase.js";
 import { requireUser } from "./auth.js";
+import { getUploadErrorMessage, validateImage } from "./image-upload.js";
 import { $, escapeHtml, formatDate, getAvatar, getDisplayName, toast } from "./ui.js";
 
 async function uploadReplyImage(file, userId) {
   if (!file || !file.size) return "";
-  const imageRef = ref(storage, `replies/${userId}/${crypto.randomUUID()}-${file.name}`);
-  await uploadBytes(imageRef, file);
+  validateImage(file);
+  const safeName = file.name.replace(/[^a-z0-9._-]/gi, "-").toLowerCase();
+  const imageRef = ref(storage, `replies/${userId}/${crypto.randomUUID()}-${safeName}`);
+  await uploadBytes(imageRef, file, { contentType: file.type });
   return getDownloadURL(imageRef);
 }
 
@@ -70,7 +73,12 @@ export function initReplies(questionId) {
     submit.disabled = true;
     submit.textContent = "Sending...";
     try {
-      const imageUrl = await uploadReplyImage(data.get("image"), user.uid);
+      let imageUrl = "";
+      try {
+        imageUrl = await uploadReplyImage(data.get("image"), user.uid);
+      } catch (imageError) {
+        toast(`${getUploadErrorMessage(imageError)} Reply text ke saath post ho raha hai.`, "warning");
+      }
       await addDoc(collection(db, "questions", questionId, "replies"), {
         body: data.get("body").trim(),
         imageUrl,

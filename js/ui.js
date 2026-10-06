@@ -98,7 +98,7 @@ export function initParticles() {
         r: Math.random() * 2 + 0.8,
         vx: (Math.random() - 0.5) * 0.35,
         vy: (Math.random() - 0.5) * 0.35,
-        hue: Math.random() > 0.5 ? 188 : 268,
+        hue: [188, 155, 48][Math.floor(Math.random() * 3)],
       });
     }
   };

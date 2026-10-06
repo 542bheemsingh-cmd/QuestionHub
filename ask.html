@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Ask a live QuestionHub community question with category, tags, and image upload.">
   <title>Ask | QuestionHub</title>
-  <link rel="stylesheet" href="css/style.css?v=ask2">
-  <link rel="stylesheet" href="css/animations.css?v=ask2">
-  <link rel="stylesheet" href="css/responsive.css?v=ask2">
+  <link rel="stylesheet" href="css/style.css?v=ui5">
+  <link rel="stylesheet" href="css/animations.css?v=ui5">
+  <link rel="stylesheet" href="css/responsive.css?v=ui5">
   <script src="https://unpkg.com/lucide@latest" defer></script>
-  <script type="module" src="js/app.js?v=ask2"></script>
+  <script type="module" src="js/app.js?v=ui5"></script>
 </head>
 <body data-page="ask">
   <canvas id="particle-canvas" aria-hidden="true"></canvas>
@@ -35,8 +35,14 @@
         <span>Checking Firebase connection...</span>
       </div>
       <form id="ask-form" class="stacked-form">
-        <label>Question title<input name="title" type="text" maxlength="140" required placeholder="What are you trying to figure out?"></label>
-        <label>Description<textarea name="description" rows="8" required placeholder="Add context, what you tried, and what kind of answer would help."></textarea></label>
+        <label>
+          <span class="field-label-row"><span>Question title</span><small><span data-count>0</span>/140</small></span>
+          <input name="title" data-count-input maxlength="140" type="text" required placeholder="What are you trying to figure out?">
+        </label>
+        <label>
+          <span class="field-label-row"><span>Description</span><small><span data-count>0</span>/2000</small></span>
+          <textarea name="description" data-count-input maxlength="2000" rows="8" required placeholder="Add context, what you tried, and what kind of answer would help."></textarea>
+        </label>
         <div class="form-grid">
           <label>Category
             <input id="category" name="category" type="hidden" required value="Gaming">
@@ -50,7 +56,8 @@
           </label>
           <label>Tags<input name="tags" type="text" placeholder="firebase, ai, setup"></label>
         </div>
-        <label class="file-drop"><i data-lucide="ImagePlus"></i><span>Upload question image</span><input name="image" type="file" accept="image/*"></label>
+        <label class="file-drop" id="question-image-drop"><i data-lucide="ImagePlus"></i><span data-image-label>Upload question image</span><input name="image" type="file" accept="image/*"></label>
+        <div class="image-preview" id="question-image-preview" hidden></div>
         <button class="btn primary" type="submit"><i data-lucide="Send"></i>Publish question</button>
       </form>
     </section>

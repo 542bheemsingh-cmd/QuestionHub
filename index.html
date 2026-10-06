@@ -6,11 +6,11 @@
   <meta name="description" content="QuestionHub is a live cyberpunk Q&A community for questions, replies, tags, categories, and image-rich discussions.">
   <title>QuestionHub | Live Community Q&A</title>
   <link rel="preconnect" href="https://www.gstatic.com">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/style.css?v=ui5">
+  <link rel="stylesheet" href="css/animations.css?v=ui5">
+  <link rel="stylesheet" href="css/responsive.css?v=ui5">
   <script src="https://unpkg.com/lucide@latest" defer></script>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=ui5"></script>
 </head>
 <body data-page="home">
   <canvas id="particle-canvas" aria-hidden="true"></canvas>
@@ -46,7 +46,7 @@
           <div class="search-results" id="search-results" hidden></div>
         </div>
         <div class="signal-grid">
-          <span><strong>16</strong> categories</span>
+          <span><strong>17</strong> categories</span>
           <span><strong>Live</strong> Firestore</span>
           <span><strong>Image</strong> uploads</span>
           <span><strong>Neon</strong> UI</span>
@@ -55,10 +55,13 @@
       </div>
     </section>
 
-    <section class="content-section">
+    <section class="content-section" data-feed-section="trending">
       <div class="section-heading">
-        <p class="eyebrow">Hot signals</p>
-        <h2>Trending questions</h2>
+        <div>
+          <p class="eyebrow">Hot signals</p>
+          <h2>Trending questions</h2>
+        </div>
+        <span class="feed-badge"><i data-lucide="Flame"></i>Top 5 by likes</span>
       </div>
       <div class="question-grid compact" id="trending-list"></div>
     </section>
@@ -89,12 +92,16 @@
       </div>
     </section>
 
-    <section class="content-section" id="latest-discussions">
+    <section class="content-section" id="latest-discussions" data-feed-section="latest">
       <div class="section-heading">
-        <p class="eyebrow">Now streaming</p>
-        <h2>Latest discussions</h2>
+        <div>
+          <p class="eyebrow" id="latest-eyebrow">Now streaming</p>
+          <h2 id="latest-title">Latest discussions</h2>
+        </div>
+        <span class="feed-badge" id="latest-feed-badge"><i data-lucide="Radio"></i>Live feed</span>
       </div>
       <div class="question-grid" id="latest-list"></div>
+      <nav class="pagination" id="latest-pagination" aria-label="Question pages"></nav>
     </section>
   </main>
   <div class="toast-stack" aria-live="polite"></div>
