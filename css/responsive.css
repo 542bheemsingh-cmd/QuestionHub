@@ -121,6 +121,15 @@
     padding: 18px;
   }
 
+  .auth-card {
+    padding: 22px 18px;
+  }
+
+  .auth-form-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .profile-cover {
     height: 106px;
   }

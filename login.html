@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Login or register for QuestionHub with Google or email/password Firebase Authentication.">
   <title>Login | QuestionHub</title>
-  <link rel="stylesheet" href="css/style.css?v=ui5">
-  <link rel="stylesheet" href="css/animations.css?v=ui5">
-  <link rel="stylesheet" href="css/responsive.css?v=ui5">
+  <link rel="stylesheet" href="css/style.css?v=auth4">
+  <link rel="stylesheet" href="css/animations.css?v=auth4">
+  <link rel="stylesheet" href="css/responsive.css?v=auth4">
   <script src="https://unpkg.com/lucide@latest" defer></script>
   <script type="module">
-    import { initPageChrome } from "./js/ui.js";
-    import { initAuthPage } from "./js/auth.js";
+    import { initPageChrome } from "./js/ui.js?v=auth4";
+    import { initAuthPage } from "./js/auth.js?v=auth4";
     initPageChrome();
     initAuthPage();
   </script>
@@ -21,23 +21,37 @@
   <div class="mouse-glow" aria-hidden="true"></div>
   <main class="auth-main">
     <section class="auth-card glass-panel">
-      <a class="brand centered" href="index.html"><span>Q</span>QuestionHub</a>
-      <div class="auth-tabs">
-        <button type="button" data-auth-switch="login">Login</button>
-        <button type="button" data-auth-switch="register">Register</button>
+      <div class="auth-intro">
+        <a class="brand centered" href="index.html"><span>Q</span>QuestionHub</a>
+        <p class="eyebrow">Your signal starts here</p>
+        <h1>Join the conversation.</h1>
+        <p class="auth-lede">Save useful answers, ask sharper questions, and stay connected to the live community.</p>
       </div>
-      <button class="btn ghost full" id="google-login" type="button"><i data-lucide="Chrome"></i>Continue with Google</button>
+      <div class="auth-tabs">
+        <button type="button" data-auth-switch="login" aria-controls="login-form" aria-selected="true">Login</button>
+        <button type="button" data-auth-switch="register" aria-controls="register-form" aria-selected="false">Create account</button>
+      </div>
+      <button class="btn google-button full" id="google-login" type="button"><span class="google-mark" aria-hidden="true">G</span><span>Continue with Google</span></button>
+      <div class="auth-divider"><span>or use email</span></div>
+      <div class="auth-status" id="auth-status" aria-live="polite"></div>
       <form id="login-form" class="stacked-form auth-login">
-        <label>Email<input name="email" type="email" required autocomplete="email"></label>
-        <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
-        <button class="btn primary" type="submit">Login</button>
+        <label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
+        <label>Password
+          <span class="password-wrap"><input name="password" type="password" required autocomplete="current-password" placeholder="Enter your password"><button type="button" class="password-toggle" data-password-toggle aria-label="Show password"><i data-lucide="Eye"></i></button></span>
+        </label>
+        <div class="auth-form-row"><button class="text-button" id="forgot-password" type="button">Forgot password?</button><span>Secure Firebase Auth</span></div>
+        <button class="btn primary full" type="submit"><i data-lucide="LogIn"></i><span>Login</span></button>
       </form>
       <form id="register-form" class="stacked-form auth-register">
-        <label>Name<input name="name" type="text" required autocomplete="name"></label>
-        <label>Email<input name="email" type="email" required autocomplete="email"></label>
-        <label>Password<input name="password" type="password" minlength="6" required autocomplete="new-password"></label>
-        <button class="btn primary" type="submit">Create account</button>
+        <label>Name<input name="name" type="text" required autocomplete="name" placeholder="Your display name"></label>
+        <label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label>
+        <label>Password
+          <span class="password-wrap"><input name="password" type="password" minlength="6" required autocomplete="new-password" placeholder="At least 6 characters"><button type="button" class="password-toggle" data-password-toggle aria-label="Show password"><i data-lucide="Eye"></i></button></span>
+        </label>
+        <p class="form-note"><i data-lucide="ShieldCheck"></i>Your account is secured with Firebase Authentication.</p>
+        <button class="btn primary full" type="submit"><i data-lucide="UserPlus"></i><span>Create account</span></button>
       </form>
+      <p class="auth-footer">By continuing, you agree to keep QuestionHub respectful and useful.</p>
     </section>
   </main>
   <div class="toast-stack" aria-live="polite"></div>
