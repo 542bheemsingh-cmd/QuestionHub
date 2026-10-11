@@ -37,6 +37,19 @@ in test mode anyone on the internet can read, write, and delete all data.
 firebase deploy --only firestore:rules,storage:rules
 ```
 
+### Composite index
+
+The category feed queries `questions` by `category` **and** orders by `createdAt`,
+which Firestore serves only with a composite index. It is declared in
+[`firestore.indexes.json`](firestore.indexes.json) — deploy it too:
+
+```bash
+firebase deploy --only firestore:indexes
+```
+
+(If you forget, Firestore returns `failed-precondition` and the console prints a
+one-click link to create the index.)
+
 The rules live in [`firestore.rules`](firestore.rules) and [`storage.rules`](storage.rules).
 In short:
 
