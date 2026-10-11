@@ -1,0 +1,31 @@
+rules_version = '2';
+
+// QuestionHub Storage rules
+// Deploy with:  firebase deploy --only storage:rules
+//
+// Images are publicly readable (they appear in the public feed), but a user may
+// only upload into their OWN folder (questions/<uid>/... or replies/<uid>/...).
+// Uploads must be real images and under 5 MB.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function validImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /questions/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && validImage();
+    }
+
+    match /replies/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && validImage();
+    }
+  }
+}

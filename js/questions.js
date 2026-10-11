@@ -18,6 +18,7 @@ import {
   deleteDoc,
   increment,
   arrayUnion,
+  arrayRemove,
   serverTimestamp,
   ref,
   uploadBytes,
@@ -27,9 +28,7 @@ import { requireUser } from "./auth.js";
 import { getUploadErrorMessage, validateImage } from "./image-upload.js";
 import { $, categories, escapeHtml, formatDate, getAvatar, getDisplayName, showSkeleton, toast } from "./ui.js";
 
-const pageSize = 8;
-let lastQuestionDoc = null;
-let loadingMore = false;
+const DEFAULT_PAGE_SIZE = 8;
 
 function withTimeout(promise, message = "Request timed out. Firebase rules/network check karo.", ms = 15000) {
   let timer;
@@ -245,7 +244,7 @@ export function initAskPage() {
 export function listenQuestionList(container, options = {}) {
   if (!container) return () => {};
   showSkeleton(container, options.skeletonCount || 4);
-  const constraints = [orderBy(options.orderField || "createdAt", "desc"), limit(options.limit || pageSize)];
+  const constraints = [orderBy(options.orderField || "createdAt", "desc"), limit(options.limit || DEFAULT_PAGE_SIZE)];
   if (options.category) constraints.unshift(where("category", "==", options.category));
   const q = query(collection(db, "questions"), ...constraints);
   return onSnapshot(q, (snapshot) => {
@@ -256,83 +255,72 @@ export function listenQuestionList(container, options = {}) {
   });
 }
 
-function questionTime(value) {
-  if (!value) return 0;
-  if (typeof value.toMillis === "function") return value.toMillis();
-  if (typeof value.seconds === "number") return value.seconds * 1000;
-  return new Date(value).getTime() || 0;
-}
-
-function paginationPages(currentPage, totalPages) {
-  if (totalPages <= 9) return Array.from({ length: totalPages }, (_, index) => index + 1);
-  const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1]);
-  return [...pages].filter((page) => page > 0 && page <= totalPages).sort((a, b) => a - b);
-}
-
-export function listenCategoryQuestions(container, pagination, category, pageSize = 15) {
+export function listenCategoryQuestions(container, pagination, category, pageLimit = 15) {
   if (!container || !category) return () => {};
-  let questions = [];
   let currentPage = Math.max(1, Number(new URLSearchParams(location.search).get("page")) || 1);
+  const pageCache = new Map();      // page -> [{ id, data }]
+  const lastDocByPage = new Map();  // page -> last QueryDocumentSnapshot (cursor)
 
   showSkeleton(container, 4);
 
-  const render = () => {
-    const totalPages = Math.max(1, Math.ceil(questions.length / pageSize));
-    currentPage = Math.min(currentPage, totalPages);
-    const start = (currentPage - 1) * pageSize;
-    const pageQuestions = questions.slice(start, start + pageSize);
-    container.innerHTML = pageQuestions.map((question) => questionCard(question.data, question.id)).join("") || `<p class="empty-state">No questions in this category yet.</p>`;
-
-    if (pagination) {
-      const pageButtons = paginationPages(currentPage, totalPages);
-      let markup = `<button class="page-button" type="button" data-page="${currentPage - 1}" aria-label="Previous page" ${currentPage === 1 ? "disabled" : ""}><i data-lucide="ChevronLeft"></i></button>`;
-      let previous = 0;
-      pageButtons.forEach((page) => {
-        if (previous && page - previous > 1) markup += `<span class="page-gap">...</span>`;
-        markup += `<button class="page-button${page === currentPage ? " is-active" : ""}" type="button" data-page="${page}" aria-current="${page === currentPage ? "page" : "false"}">${page}</button>`;
-        previous = page;
-      });
-      markup += `<button class="page-button" type="button" data-page="${currentPage + 1}" aria-label="Next page" ${currentPage === totalPages ? "disabled" : ""}><i data-lucide="ChevronRight"></i></button>`;
-      pagination.innerHTML = totalPages > 1 ? markup : "";
+  // Fetch one page server-side (limit + startAfter), caching pages so we can
+  // walk forward/backward without downloading the whole category.
+  async function fetchPage(page) {
+    if (pageCache.has(page)) return pageCache.get(page);
+    if (page > 1) {
+      await fetchPage(page - 1);
+      if (!lastDocByPage.get(page - 1)) {
+        pageCache.set(page, []);
+        return [];
+      }
     }
+    const constraints = [where("category", "==", category), orderBy("createdAt", "desc"), limit(pageLimit)];
+    const cursor = page > 1 ? lastDocByPage.get(page - 1) : null;
+    if (cursor) constraints.push(startAfter(cursor));
+    const snapshot = await getDocs(query(collection(db, "questions"), ...constraints));
+    lastDocByPage.set(page, snapshot.docs[snapshot.docs.length - 1] || null);
+    const items = snapshot.docs.map((docSnap) => ({ id: docSnap.id, data: docSnap.data() }));
+    pageCache.set(page, items);
+    return items;
+  }
 
-    if (window.lucide) window.lucide.createIcons();
-  };
+  async function render(page) {
+    try {
+      const items = await fetchPage(page);
+      const hasPrev = page > 1;
+      const hasNext = items.length === pageLimit && lastDocByPage.get(page) != null;
+      container.innerHTML = items.map((question) => questionCard(question.data, question.id)).join("")
+        || `<p class="empty-state">No questions in this category yet.</p>`;
+      if (pagination) {
+        pagination.innerHTML = (hasPrev || hasNext) ? `
+          <button class="page-button" type="button" data-page="${page - 1}" aria-label="Previous page" ${hasPrev ? "" : "disabled"}><i data-lucide="ChevronLeft"></i></button>
+          <span class="page-current">Page ${page}</span>
+          <button class="page-button" type="button" data-page="${page + 1}" aria-label="Next page" ${hasNext ? "" : "disabled"}><i data-lucide="ChevronRight"></i></button>
+        ` : "";
+      }
+      if (window.lucide) window.lucide.createIcons();
+    } catch (error) {
+      container.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
+      if (pagination) pagination.innerHTML = "";
+    }
+  }
 
   pagination?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-page]");
     if (!button || button.disabled) return;
-    currentPage = Number(button.dataset.page);
+    const next = Number(button.dataset.page);
+    if (!Number.isFinite(next) || next < 1) return;
+    currentPage = next;
     const params = new URLSearchParams(location.search);
     params.set("category", category);
     params.set("page", String(currentPage));
     history.replaceState({}, "", `${location.pathname}?${params.toString()}#latest-discussions`);
-    render();
+    render(currentPage);
     document.querySelector("#latest-discussions")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  const categoryQuery = query(collection(db, "questions"), where("category", "==", category));
-  return onSnapshot(categoryQuery, (snapshot) => {
-    questions = snapshot.docs
-      .map((docSnap) => ({ id: docSnap.id, data: docSnap.data() }))
-      .sort((a, b) => questionTime(b.data.createdAt) - questionTime(a.data.createdAt));
-    render();
-  }, (error) => {
-    container.innerHTML = `<p class="empty-state">${escapeHtml(error.message)}</p>`;
-    if (pagination) pagination.innerHTML = "";
-  });
-}
-
-export async function loadMoreQuestions(container) {
-  if (!container || loadingMore) return;
-  loadingMore = true;
-  const constraints = [orderBy("createdAt", "desc"), limit(pageSize)];
-  if (lastQuestionDoc) constraints.push(startAfter(lastQuestionDoc));
-  const snapshot = await getDocs(query(collection(db, "questions"), ...constraints));
-  if (snapshot.docs.length) lastQuestionDoc = snapshot.docs[snapshot.docs.length - 1];
-  container.insertAdjacentHTML("beforeend", snapshot.docs.map((docSnap) => questionCard(docSnap.data(), docSnap.id)).join(""));
-  if (window.lucide) window.lucide.createIcons();
-  loadingMore = false;
+  render(currentPage);
+  return () => {};
 }
 
 export function initQuestionActions() {
@@ -354,8 +342,15 @@ export function initQuestionActions() {
       }
       if (bookmarkButton) {
         const id = bookmarkButton.dataset.bookmarkQuestion;
-        await setDoc(doc(db, "users", user.uid), { bookmarks: arrayUnion(id), updatedAt: serverTimestamp() }, { merge: true });
-        toast("Saved to your profile.", "success");
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const saved = (userSnap.data()?.bookmarks || []).includes(id);
+        await setDoc(userRef, {
+          bookmarks: saved ? arrayRemove(id) : arrayUnion(id),
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+        bookmarkButton.classList.toggle("is-saved", !saved);
+        toast(saved ? "Removed from your saved questions." : "Saved to your profile.", "success");
       }
     } catch (error) {
       toast(error.message, "error");
@@ -367,6 +362,12 @@ export async function getQuestion(id) {
   const snap = await getDoc(doc(db, "questions", id));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
+
+// NOTE: this is a bounded client-side search over the most recent questions
+// only. Firestore has no full-text search, so matching happens in the browser
+// after fetching a small window. For true search across all questions, wire up
+// a dedicated service (e.g. Algolia/Typesense) or a server-side index.
+const SEARCH_SCAN_LIMIT = 50;
 
 export function listenSearch(input, results) {
   if (!input || !results) return;
@@ -380,7 +381,7 @@ export function listenSearch(input, results) {
       return;
     }
     timer = setTimeout(async () => {
-      const snapshot = await getDocs(query(collection(db, "questions"), orderBy("createdAt", "desc"), limit(30)));
+      const snapshot = await getDocs(query(collection(db, "questions"), orderBy("createdAt", "desc"), limit(SEARCH_SCAN_LIMIT)));
       const matches = snapshot.docs
         .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
         .filter((question) => `${question.title} ${question.description} ${(question.tags || []).join(" ")}`.toLowerCase().includes(term))

@@ -1,0 +1,88 @@
+rules_version = '2';
+
+// QuestionHub Firestore rules
+// Deploy with:  firebase deploy --only firestore:rules
+//
+// Design:
+//  - Questions and replies are publicly readable (the feed is public).
+//  - Only signed-in users can write.
+//  - A user may only edit/delete their OWN content (authorId == uid).
+//  - Anyone signed in may bump the derived counters (likeCount, replyCount)
+//    and reaction counters, because those are updated by other users' actions.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAuthor(data) {
+      return signedIn() && request.auth.uid == data.authorId;
+    }
+
+    match /questions/{questionId} {
+      allow read: if true;
+
+      // Create: must be signed in, must own the doc, sane field sizes.
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 140
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.description.size() <= 2000
+        && request.resource.data.category is string
+        && request.resource.data.tags is list
+        && request.resource.data.tags.size() <= 8
+        && request.resource.data.likeCount == 0
+        && request.resource.data.replyCount == 0;
+
+      // Update: the author may edit their own post, OR any signed-in user may
+      // change ONLY the derived counters (like/reply counts + updatedAt).
+      allow update: if signedIn() && (
+        (isAuthor(resource.data) && request.resource.data.authorId == resource.data.authorId)
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['likeCount', 'replyCount', 'updatedAt'])
+      );
+
+      // Delete: author only.
+      allow delete: if isAuthor(resource.data);
+
+      match /likes/{userId} {
+        allow read: if true;
+        allow write: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /replies/{replyId} {
+        allow read: if true;
+
+        allow create: if signedIn()
+          && request.resource.data.authorId == request.auth.uid
+          && request.resource.data.body is string
+          && request.resource.data.body.size() > 0
+          && request.resource.data.body.size() <= 5000;
+
+        // Author may edit their reply, OR any signed-in user may change ONLY
+        // the derived counters (likeCount / reactions).
+        allow update: if signedIn() && (
+          (isAuthor(resource.data) && request.resource.data.authorId == resource.data.authorId)
+          || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['likeCount', 'reactions'])
+        );
+
+        allow delete: if isAuthor(resource.data);
+
+        match /likes/{userId} {
+          allow read: if true;
+          allow write: if signedIn() && request.auth.uid == userId;
+        }
+      }
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow write: if signedIn() && request.auth.uid == userId;
+    }
+  }
+}

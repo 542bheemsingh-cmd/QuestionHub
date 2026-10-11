@@ -1300,6 +1300,12 @@ body::before {
   box-shadow: 0 0 22px rgba(86, 229, 255, 0.14);
 }
 
+.icon-action.is-saved {
+  color: var(--green);
+  border-color: rgba(114, 245, 194, 0.55);
+  background: rgba(114, 245, 194, 0.1);
+}
+
 .category-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 
 .category-card {
@@ -1416,6 +1422,13 @@ body::before {
 .page-gap {
   color: var(--muted);
   padding-inline: 3px;
+}
+
+.page-current {
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  padding-inline: 6px;
 }
 
 .auth-main {

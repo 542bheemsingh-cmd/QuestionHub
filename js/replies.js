@@ -22,6 +22,15 @@ import { requireUser } from "./auth.js";
 import { getUploadErrorMessage, validateImage } from "./image-upload.js";
 import { $, escapeHtml, formatDate, getAvatar, getDisplayName, toast } from "./ui.js";
 
+// Emoji reactions are stored under stable ASCII keys rather than the emoji
+// itself, so Firestore field paths never contain non-ASCII characters.
+const REACTIONS = [
+  { emoji: "👍", key: "thumbsup" },
+  { emoji: "🔥", key: "fire" },
+  { emoji: "💡", key: "bulb" },
+  { emoji: "🚀", key: "rocket" },
+];
+
 async function uploadReplyImage(file, userId) {
   if (!file || !file.size) return "";
   validateImage(file);
@@ -46,8 +55,8 @@ function replyMarkup(reply, id) {
       ${reply.imageUrl ? `<img class="reply-image" src="${escapeHtml(reply.imageUrl)}" alt="Reply attachment">` : ""}
       <div class="card-actions">
         <button class="icon-action" data-like-reply="${id}" type="button"><i data-lucide="Heart"></i><span>${reply.likeCount || 0}</span></button>
-        ${["👍", "🔥", "💡", "🚀"].map((emoji) => `
-          <button class="emoji-action" data-react-reply="${id}" data-emoji="${emoji}" type="button">${emoji} ${reactions[emoji] || 0}</button>
+        ${REACTIONS.map(({ emoji, key }) => `
+          <button class="emoji-action" data-react-reply="${id}" data-react-key="${key}" type="button">${emoji} ${reactions[key] || 0}</button>
         `).join("")}
       </div>
     </article>
@@ -120,9 +129,9 @@ export function initReplies(questionId) {
       }
       if (reactButton) {
         const replyId = reactButton.dataset.reactReply;
-        const emoji = reactButton.dataset.emoji;
+        const key = reactButton.dataset.reactKey;
         await updateDoc(doc(db, "questions", questionId, "replies", replyId), {
-          [`reactions.${emoji}`]: increment(1),
+          [`reactions.${key}`]: increment(1),
         });
       }
     } catch (error) {

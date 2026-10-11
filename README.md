@@ -1,94 +1,103 @@
-# 🌐 Question Hub
+# 🌐 QuestionHub
 
-<div align="center">
+**Live Community Q&A — a realtime, image-rich discussion platform.**
 
-<h1>🚀 Question Hub</h1>
+QuestionHub is a modern, cyberpunk-styled web app where people ask and answer
+questions across 17 category channels, with live Firebase sync, likes, bookmarks,
+emoji reactions, and image attachments.
 
-<h3>💡 Smart Multi-Category Question & Answer Platform</h3>
-
-<p>
-✨ <b>Question Hub</b> is a modern and interactive web platform where users can explore, ask, and discover questions across multiple categories including Technology, Gaming, Science, News, General Knowledge, and more.
-</p>
-
-<p>
-Built with a clean modern UI, responsive design, smooth animations, and optimized performance for a seamless experience across all devices.
-</p>
-
-<br>
-
-<a href="https://542bheemsingh-cmd.github.io/QuestionHub/" target="_blank">
-  🔴 Live Website
-</a>
-
-<br><br>
-
-<a href="https://github.com/542bheemsingh-cmd/questionhub" target="_blank">
-  📂 GitHub Repository
-</a>
-
-</div>
+- 🔴 **Live site:** <https://542bheemsingh-cmd.github.io/QuestionHub/>
+- 📂 **Repository:** <https://github.com/542bheemsingh-cmd/QuestionHub>
 
 ---
 
-# ✨ Features
+## ✨ Features
 
-<div align="center">
-
-| 🚀 Feature | 📌 Description |
+| Feature | Description |
 |---|---|
-| 🧠 Multi Categories | Technology, Gaming, Science & More |
-| 🎨 Modern UI | Clean & Stylish Interface |
-| ⚡ Fast Performance | Lightweight & Optimized |
-| 📱 Responsive Design | Works on Mobile & Desktop |
-| ✨ Smooth Animations | Better User Experience |
-| 🔎 Easy Navigation | Simple & User Friendly |
-| 🌙 Dark Theme | Modern Dark Interface |
-| 💬 Interactive Layout | Dynamic Content Sections |
-
-</div>
+| 🧠 Multi-category | 17 channels — Technology, Gaming, Science, Space, Coding, and more |
+| ⚡ Realtime | Live feed and replies via Firestore `onSnapshot` |
+| 🔐 Auth | Google + Email/Password (Firebase Auth), password reset |
+| 🖼️ Image uploads | Attach images to questions and replies (≤ 5 MB) |
+| ❤️ Engagement | Likes, bookmarks (save / un-save), emoji reactions on replies |
+| 🔎 Search | Instant search over questions, tags, and categories |
+| 🎨 Neon UI | Dark glassmorphism theme, canvas particles, smooth animations |
+| 📱 Responsive | Layout adapts at 1040px / 760px / 420px |
 
 ---
 
-# 📸 Website Preview
-
-🔥 Modern animated interface  
-⚡ Smooth user experience  
-📱 Fully responsive layout  
-🎨 Attractive design system  
-🧠 Smart question organization  
-
----
-
-# 🛠️ Technologies Used
-
-<div align="center">
+## 🛠️ Tech stack
 
 | Technology | Purpose |
-|------------|----------|
-| HTML5 | Website Structure |
-| CSS3 | Styling & Animations |
-| JavaScript | Functionality |
-| Firebase (Optional) | Database & Storage |
-
-</div>
+|---|---|
+| HTML5 | Structure (5 pages) |
+| CSS3 | Styling, glassmorphism, animations |
+| JavaScript (ES modules) | All app logic — no framework, no build step |
+| Firebase 10.12.5 | Auth, Firestore, Storage |
+| [Lucide](https://lucide.dev) `1.55.0` | Icons (pinned) |
+| DiceBear | Fallback avatars |
 
 ---
 
-# 🚀 Run Locally
+## 📁 Project structure
 
-Clone the repository:
+```text
+questionhub/
+├── index.html          # Home: hero, trending, categories, live feed, search
+├── ask.html            # Ask a question
+├── question.html       # Question detail + replies
+├── login.html          # Login / register
+├── profile.html        # Profile + saved questions
+├── css/
+│   ├── style.css
+│   ├── animations.css
+│   └── responsive.css
+├── js/
+│   ├── app.js          # Page router / bootstrap
+│   ├── auth.js         # Auth flows (Google, email, reset, logout)
+│   ├── firebase.js     # Firebase init + config
+│   ├── image-upload.js # Image validation
+│   ├── questions.js    # Feed, ask form, likes, bookmarks, search
+│   ├── replies.js      # Replies, likes, emoji reactions
+│   └── ui.js           # Shared UI helpers (particles, nav, toast, categories)
+├── firestore.rules     # Firestore security rules
+├── storage.rules       # Storage security rules
+├── firebase.json
+└── FIREBASE_SETUP.md   # Setup guide (read this before deploying)
+```
+
+---
+
+## 🚀 Run locally
+
+ES modules need an HTTP origin — don't open the HTML files directly.
 
 ```bash
 git clone https://github.com/542bheemsingh-cmd/QuestionHub.git
+cd QuestionHub
+python3 -m http.server 5173
+# open http://localhost:5173
+```
 
+Firebase-backed features (login, feed, posting) require your own Firebase config
+and deployed rules — see **[FIREBASE_SETUP.md](FIREBASE_SETUP.md)**.
 
+---
 
-questionhub/
-│
-├── index.html
-├── style.css
-├── script.js
-├── assets/
-│   ├── images/
-│   └── icons/
-└── README.md
+## 🔐 Security
+
+The data is protected by [`firestore.rules`](firestore.rules) and
+[`storage.rules`](storage.rules): public read, signed-in write, and **ownership
+checks** so a user can only edit or delete their own content. Deploy them with:
+
+```bash
+firebase deploy --only firestore:rules,storage:rules
+```
+
+Never ship with open ("test mode") rules.
+
+---
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE).
