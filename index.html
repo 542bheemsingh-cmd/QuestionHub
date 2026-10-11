@@ -6,11 +6,14 @@
   <meta name="description" content="QuestionHub is a live cyberpunk Q&A community for questions, replies, tags, categories, and image-rich discussions.">
   <title>QuestionHub | Live Community Q&A</title>
   <link rel="preconnect" href="https://www.gstatic.com">
-  <link rel="stylesheet" href="css/style.css?v=ui5">
-  <link rel="stylesheet" href="css/animations.css?v=ui5">
-  <link rel="stylesheet" href="css/responsive.css?v=ui5">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css?v=pro1">
+  <link rel="stylesheet" href="css/animations.css?v=pro1">
+  <link rel="stylesheet" href="css/responsive.css?v=pro1">
   <script src="https://unpkg.com/lucide@1.55.0/dist/umd/lucide.min.js" defer></script>
-  <script type="module" src="js/app.js?v=ui5"></script>
+  <script type="module" src="js/app.js?v=pro1"></script>
 </head>
 <body data-page="home">
   <canvas id="particle-canvas" aria-hidden="true"></canvas>
@@ -68,8 +71,10 @@
 
     <section class="content-section">
       <div class="section-heading">
-        <p class="eyebrow">Channels</p>
-        <h2>Categories</h2>
+        <div>
+          <p class="eyebrow">Channels</p>
+          <h2>Categories</h2>
+        </div>
       </div>
       <div class="category-grid" id="category-grid">
         <!-- Category cards are rendered by js/ui.js renderCategoryCards() -->
