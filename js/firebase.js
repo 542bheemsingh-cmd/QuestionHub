@@ -23,6 +23,7 @@ import {
   deleteDoc,
   increment,
   arrayUnion,
+  arrayRemove,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 import {
   getStorage,
@@ -70,6 +71,7 @@ export {
   deleteDoc,
   increment,
   arrayUnion,
+  arrayRemove,
   ref,
   uploadBytes,
   getDownloadURL,
